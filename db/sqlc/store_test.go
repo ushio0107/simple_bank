@@ -76,7 +76,6 @@ func TestTransferTx(t *testing.T) {
 		_, err = store.GetEntry(context.Background(), toEntry.ID)
 		require.NoError(t, err)
 
-		// TODO: check accounts' balance
 		// Check accounts
 		fromAccount := result.FromAccount
 		require.NotEmpty(t, fromAccount)
@@ -86,10 +85,17 @@ func TestTransferTx(t *testing.T) {
 		require.NotEmpty(t, toAccount)
 		require.Equal(t, ac2.ID, toAccount.ID)
 
+		// org ac1 Balance - after transfer ac1 Balance = amount
 		diff1 := ac1.Balance - fromAccount.Balance
 		diff2 := toAccount.Balance - ac2.Balance
 		require.Equal(t, diff1, diff2)
+		// The balance of ac1 before transfer should be larger than after transfer.
 		require.True(t, diff1 > 0)
+
+		// The balance of account 1 will be decreased by 1 times amount after the 1st transaction,
+		// then 2 times amount after the 2nd transaction,
+		// 3 times amount after the 3rd transaction,
+		// and so on and so forth.
 		require.True(t, diff1%amount == 0)
 
 		k := int(diff1 / amount)
@@ -97,4 +103,17 @@ func TestTransferTx(t *testing.T) {
 		require.NotContains(t, existed, k)
 		existed[k] = true
 	}
+
+	updatedAc1, err := testQueries.GetAccount(context.Background(), ac1.ID)
+	require.NotEmpty(t, err)
+
+	updatedAc2, err := testQueries.GetAccount(context.Background(), ac2.ID)
+	require.NotEmpty(t, err)
+
+	// The account transfer amount(10) for 5 times, so the balance of ac1 should decrease 5*10.
+	// FromAccount
+	require.Equal(t, ac1.Balance-int64(n)*amount, updatedAc1.Balance)
+	// ToAccount
+	require.Equal(t, ac2.Balance+int64(n)*amount, updatedAc2.Balance)
+
 }

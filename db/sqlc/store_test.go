@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -13,15 +14,18 @@ func TestTransferTx(t *testing.T) {
 	ac1 := createRandomAccount(t)
 	ac2 := createRandomAccount(t)
 
-	n := 5
+	n := 2
 	amount := int64(10)
 
 	errs := make(chan error)
 	results := make(chan TransferTxResult)
 
 	for i := 0; i < n; i++ {
+		txName := fmt.Sprintf("tx %d", i+1)
 		go func() {
-			result, err := store.TransferTx(context.Background(), TransferTxParams{
+			ctx := context.WithValue(context.Background(), txKey, txName)
+			// Concurrency
+			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: ac1.ID,
 				ToAccountID:   ac2.ID,
 				Amount:        amount,
@@ -86,6 +90,7 @@ func TestTransferTx(t *testing.T) {
 		require.Equal(t, ac2.ID, toAccount.ID)
 
 		// org ac1 Balance - after transfer ac1 Balance = amount
+		fmt.Println(">> tx:", fromAccount.Balance, toAccount.Balance)
 		diff1 := ac1.Balance - fromAccount.Balance
 		diff2 := toAccount.Balance - ac2.Balance
 		require.Equal(t, diff1, diff2)
@@ -105,10 +110,10 @@ func TestTransferTx(t *testing.T) {
 	}
 
 	updatedAc1, err := testQueries.GetAccount(context.Background(), ac1.ID)
-	require.NotEmpty(t, err)
+	require.NoError(t, err)
 
 	updatedAc2, err := testQueries.GetAccount(context.Background(), ac2.ID)
-	require.NotEmpty(t, err)
+	require.NoError(t, err)
 
 	// The account transfer amount(10) for 5 times, so the balance of ac1 should decrease 5*10.
 	// FromAccount

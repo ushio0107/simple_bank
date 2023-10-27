@@ -123,3 +123,57 @@ func TestTransferTx(t *testing.T) {
 	require.Equal(t, ac2.Balance+int64(n)*amount, updatedAc2.Balance)
 
 }
+
+func TestTransferDeadlock(t *testing.T) {
+	store := NewStore(testDB)
+
+	ac1 := createRandomAccount(t)
+	ac2 := createRandomAccount(t)
+
+	n := 10
+	amount := int64(10)
+
+	errs := make(chan error)
+	// We don't need to check the results, since we are testing the deadlock here, instead of checking the expected result.
+	// results := make(chan TransferTxResult)
+
+	for i := 0; i < n; i++ {
+		// For debug, log information.
+		fromAccountID := ac1.ID
+		toAccountID := ac2.ID
+
+		if i%2 == 1 {
+			fromAccountID = ac2.ID
+			toAccountID = ac1.ID
+		}
+		go func() {
+			// Concurrency
+			_, err := store.TransferTx(context.Background(), TransferTxParams{
+				FromAccountID: fromAccountID,
+				ToAccountID:   toAccountID,
+				Amount:        amount,
+			})
+
+			// Send the error and result to goroutine by channel.
+			errs <- err
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+	}
+
+	updatedAc1, err := testQueries.GetAccount(context.Background(), ac1.ID)
+	require.NoError(t, err)
+
+	updatedAc2, err := testQueries.GetAccount(context.Background(), ac2.ID)
+	require.NoError(t, err)
+
+	// Since ac1 + 5 * amount - 5 * amount, ac2 + 5 * amount - 5 * amount, the balance of both accounts don't change even after the transaction.
+	// FromAccount
+	require.Equal(t, ac1.Balance, updatedAc1.Balance)
+	// ToAccount
+	require.Equal(t, ac2.Balance, updatedAc2.Balance)
+
+}

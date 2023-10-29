@@ -1,7 +1,7 @@
 # Simple Bank
 
 # Introduction
-This is a simple bank api.
+This is a simple bank RESTful api.
 
 ## Tech
 - Golang

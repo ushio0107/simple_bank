@@ -9,6 +9,7 @@ sql:
       out: "db/sqlc"
       emit_json_tags: true
       emit_interface: true
+      -- If the item is empty, return response with an empty slices.
       emit_empty_slices: true
       overrides:
         - db_type: "timestamptz"

@@ -48,6 +48,8 @@ func (s *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	// If we remove the following line, the test will fail.
+	// Because the mock store required the times of the function call should be 1.
 	ac, err := s.store.GetAccount(ctx, req.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {

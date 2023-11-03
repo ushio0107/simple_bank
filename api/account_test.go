@@ -21,6 +21,7 @@ func TestGetAccountAPI(t *testing.T) {
 
 	store := mockdb.NewMockStore(ctrl)
 	// Build stubs.
+	// Indicate that the object function is expected to be called.
 	store.EXPECT().
 		GetAccount(gomock.Any(), gomock.Eq(ac.ID)).
 		// Times(1) means we expect this function to be called exactly 1 time.

@@ -62,6 +62,11 @@ func (s *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	/*
+		If we add the following line, the test will fail due to the response body is not matched.
+			ac = db.Account{}
+	*/
+
 	ctx.JSON(http.StatusOK, ac)
 }
 

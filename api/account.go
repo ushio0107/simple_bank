@@ -1,3 +1,6 @@
+/*
+These functions are the handlers of the API, which are the interface between the client and the database.
+*/
 package api
 
 import (

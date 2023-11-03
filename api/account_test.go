@@ -19,33 +19,56 @@ import (
 func TestGetAccountAPI(t *testing.T) {
 	ac := randomAccount()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	// Define all test cases to implement 100% test coverage.
+	testCases := []struct {
+		name          string
+		accountID     int64
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(recorder *httptest.ResponseRecorder)
+	}{
+		{
+			name:      "OK", // First happy case.
+			accountID: ac.ID,
+			// Indicate that the object function is expected to be called.
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccount(gomock.Any(), gomock.Eq(ac.ID)).
+					// Times(1) means we expect this function to be called exactly 1 time.
+					Times(1).
+					// We can use the Return function to tell gomock to return some specific values
+					// whenever the GetAccount function is called.
+					Return(ac, nil)
+			},
+			checkResponse: func(recorder *httptest.ResponseRecorder) {
+				// Check the response.
+				require.Equal(t, http.StatusOK, recorder.Code)
+				// Check the response body.
+				requireBodyMatchAccount(t, recorder.Body, ac)
+			},
+			// TODO: Add more test cases.
+		},
+	}
 
-	store := mockdb.NewMockStore(ctrl)
-	// Build stubs.
-	// Indicate that the object function is expected to be called.
-	store.EXPECT().
-		GetAccount(gomock.Any(), gomock.Eq(ac.ID)).
-		// Times(1) means we expect this function to be called exactly 1 time.
-		Times(1).
-		// We can use the Return function to tell gomock to return some specific values
-		// whenever the GetAccount function is called.
-		Return(ac, nil)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	// Start test server and send request.
-	server := NewServer(store)
-	recorder := httptest.NewRecorder()
+			store := mockdb.NewMockStore(ctrl)
+			tc.buildStubs(store)
 
-	url := fmt.Sprintf("/accounts/%d", ac.ID)
-	request, err := http.NewRequest(http.MethodGet, url, nil)
-	require.NoError(t, err)
+			// Start test server and send request.
+			server := NewServer(store)
+			recorder := httptest.NewRecorder()
 
-	server.router.ServeHTTP(recorder, request)
-	// Check the response.
-	require.Equal(t, http.StatusOK, recorder.Code)
-	// Check the response body.
-	requireBodyMatchAccount(t, recorder.Body, ac)
+			url := fmt.Sprintf("/accounts/%d", ac.ID)
+			request, err := http.NewRequest(http.MethodGet, url, nil)
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			tc.checkResponse(recorder)
+		})
+	}
 }
 
 func randomAccount() db.Account {

@@ -10,8 +10,16 @@ drop_db:
 migration_up:
 	migrate -path db/migration -database "postgres://root:123456@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
+# Only applies 1 next migration version from the current one.
+migration_up1:
+	migrate -path db/migration -database "postgres://root:123456@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+
 migration_down:
 	migrate -path db/migration -database "postgres://root:123456@localhost:5432/simple_bank?sslmode=disable" -verbose down
+
+# Just run the last down migration version that was applied before.
+migration_down1:
+	migrate -path db/migration -database "postgres://root:123456@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate
@@ -27,4 +35,4 @@ server:
 generate_mockdb:
 	mockgen -package mockdb -destination db/mock/store.go simple_bank/db/sqlc Store
 
-.PHONY: postgres create_db drop_db migration_up migration_down sqlc test
+.PHONY: postgres create_db drop_db migration_up migration_up1 migration_down migration_down1 sqlc test

@@ -9,3 +9,6 @@ This is a simple bank RESTful api.
 - SQLC
 - Docker
 
+# 
+User->createAccount
+Account -> createTransfer

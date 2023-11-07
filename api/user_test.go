@@ -50,6 +50,13 @@ func EqCreateUserParams(arg db.CreateUserParams, password string) gomock.Matcher
 
 func TestCreateUserAPI(t *testing.T) {
 	user, password := randomUser(t)
+	/*
+		The password which returned by func randomUser is not hashed. However, we need to create an user by inputing hashed password,
+		If we hashed the password by util.HashedPassword(password) here and input to the params,
+		the hashed password will be different from the password which returned by func randomUser.
+
+		And the test will fail. Therefore, we use matcher to solve this problem.
+	*/
 
 	for _, tc := range []struct {
 		name          string

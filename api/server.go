@@ -23,7 +23,7 @@ func NewServer(store db.Store) *Server {
 
 	userGroup := router.Group("/users")
 	{
-		userGroup.POST("/users", server.createUser)
+		userGroup.POST("", server.createUser)
 		userGroup.GET("/users/:id", server.getUser)
 	}
 

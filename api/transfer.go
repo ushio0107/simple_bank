@@ -19,6 +19,7 @@ type transferRequest struct {
 	Currency      string `json:"currency" binding:"required,currency"`
 }
 
+// createTransfer is the handler of the create transfer API.
 func (s *Server) createTransfer(ctx *gin.Context) {
 	var req transferRequest
 	// Check the content of json is as required of binding.
@@ -45,6 +46,7 @@ func (s *Server) createTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
+// validAccount checks if the account is valid.
 func (s *Server) validAccount(ctx *gin.Context, accountID int64, currency string) bool {
 	ac, err := s.store.GetAccount(ctx, accountID)
 	if err != nil {

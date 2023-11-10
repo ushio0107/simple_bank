@@ -17,6 +17,7 @@ type createAccountRequest struct {
 	Currency string `json:"currency" binding:"required,currency"`
 }
 
+// createAccount is the handler of the create account API.
 func (s *Server) createAccount(ctx *gin.Context) {
 	var req createAccountRequest
 	// Check the content of json is as required of binding.
@@ -49,6 +50,7 @@ type getAccountRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+// getAccount is the handler of the get account API.
 func (s *Server) getAccount(ctx *gin.Context) {
 	var req getAccountRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -83,6 +85,7 @@ type listAccountRequest struct {
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
 }
 
+// listAccounts is the handler of the list accounts API.
 func (s *Server) listAccounts(ctx *gin.Context) {
 	var req listAccountRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -107,6 +110,7 @@ type deleteAccountRequest struct {
 	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
+// deleteAccount is the handler of the delete account API.
 func (s *Server) deleteAccount(ctx *gin.Context) {
 	var req deleteAccountRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -135,6 +139,7 @@ type updateAccountRequest struct {
 	Balance int64 `json:"balance" binding:"required,min=1"`
 }
 
+// updateAccount is the handler of the update account API.
 func (s *Server) updateAccount(ctx *gin.Context) {
 	var req updateAccountRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {

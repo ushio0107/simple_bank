@@ -26,6 +26,7 @@ type createUserResponse struct {
 	CreatedAt         time.Time `json:"created_at"`
 }
 
+// createUser is the handler of the create user API.
 func (s *Server) createUser(ctx *gin.Context) {
 	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -76,6 +77,7 @@ type getUserRequest struct {
 	Username string `uri:"username" binding:"required,min=1"`
 }
 
+// getUser is the handler of the get user API.
 func (s *Server) getUser(ctx *gin.Context) {
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

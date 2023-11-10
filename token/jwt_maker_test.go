@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestJWTMak(t *testing.T) {
+func TestJWTMaker(t *testing.T) {
 	maker, err := NewJWTMaker(util.RandomString(32))
 	require.NoError(t, err)
 
@@ -65,3 +65,14 @@ func TestInvalidJWTToken(t *testing.T) {
 	require.EqualError(t, err, ErrInvalidToken.Error())
 	require.Nil(t, payload)
 }
+
+/*
+	None Algorithm for JWT:
+		No signature or encryption is applied in a JWT.
+		In this case, the JWT still consists of three parts: the Header, Payload, and Signature,
+		but the signature part is left empty or set to "none".
+
+		Specifically, when the alg field in the JWT header is set to none, it indicates that the JWT is unsigned.
+		This means that anyone can read the data within the JWT, but there is no way to verify if the data has been tampered with.
+		Since there is no signature, anyone can alter the content of the JWT without detection.
+*/

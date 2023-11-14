@@ -29,34 +29,40 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		store:      store,
 		tokenMaker: tokenMaker,
 	}
-	router := gin.Default()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("currency", validCurrency)
 	}
 
-	userGroup := router.Group("/users")
-	{
-		userGroup.POST("", server.createUser)
-		userGroup.GET("/users/:id", server.getUser)
-	}
+	server.setupRouter()
 
-	accountsGroup := router.Group("/accounts")
-	{
-		accountsGroup.POST("", server.createAccount)
-		accountsGroup.GET("/:id", server.getAccount)
-		accountsGroup.GET("", server.listAccounts)
-		accountsGroup.DELETE("/:id", server.deleteAccount)
-		accountsGroup.PUT("", server.updateAccount)
-	}
-
-	transferGroup := router.Group("/transfers")
-	{
-		transferGroup.POST("", server.createTransfer)
-	}
-
-	server.router = router
 	return server, nil
+}
+
+// setupRouter sets up the router for the server.
+func (s *Server) setupRouter() {
+	s.router = gin.Default()
+
+	userGroup := s.router.Group("/users")
+	{
+		userGroup.POST("", s.createUser)
+		userGroup.GET("/users/login", s.loginUser)
+		userGroup.GET("/users/:id", s.getUser)
+	}
+
+	accountsGroup := s.router.Group("/accounts")
+	{
+		accountsGroup.POST("", s.createAccount)
+		accountsGroup.GET("/:id", s.getAccount)
+		accountsGroup.GET("", s.listAccounts)
+		accountsGroup.DELETE("/:id", s.deleteAccount)
+		accountsGroup.PUT("", s.updateAccount)
+	}
+
+	transferGroup := s.router.Group("/transfers")
+	{
+		transferGroup.POST("", s.createTransfer)
+	}
 }
 
 // Start runs the HTTP server on a specific address.

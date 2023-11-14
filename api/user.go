@@ -18,12 +18,24 @@ type createUserRequest struct {
 	Email    string `json:"email" binding:"required,email"` // This field should will be verified by validation which provided by the validator package.
 }
 
-type createUserResponse struct {
+// userResponse returns a new struct response instead of the user struct directly,
+// because we don't want to expose the hashed password.
+type userResponse struct {
 	Username          string    `json:"username"`
 	FullName          string    `json:"full_name"`
 	Email             string    `json:"email"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
+}
+
+func newUserResponse(user db.User) userResponse {
+	return userResponse{
+		Username:          user.Username,
+		FullName:          user.FullName,
+		Email:             user.Email,
+		PasswordChangedAt: user.PasswordChangedAt,
+		CreatedAt:         user.CreatedAt,
+	}
 }
 
 // createUser is the handler of the create user API.
@@ -61,15 +73,54 @@ func (s *Server) createUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	response := createUserResponse{
-		Username:          user.Username,
-		FullName:          user.FullName,
-		Email:             user.Email,
-		PasswordChangedAt: user.PasswordChangedAt,
-		CreatedAt:         user.CreatedAt,
+	ctx.JSON(http.StatusOK, newUserResponse(user))
+}
+
+type loginUserRequest struct {
+	Username string `json:"username" binding:"required,alphanum"` // This field should contain ASCII alphanumeric characters only.
+	Password string `json:"password" binding:"required,min=6"`    // This field should contain at least 6 characters.
+}
+
+type loginUserResponse struct {
+	AccessToken  string `json:"access_token"`
+	userResponse userResponse
+}
+
+func (s *Server) loginUser(ctx *gin.Context) {
+	var req loginUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
 	}
-	// Return a new struct response instead of the user struct directly,
-	// because we don't want to expose the hashed password.
+
+	user, err := s.store.GetUser(ctx, req.Username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Specific account id isn't be found, not existed.
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
+		// Unexpected error occurs when talking to the database.
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if err := util.CheckPassword(req.Password, user.HashedPassword); err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	accessToken, err := s.tokenMaker.CreateToken(user.Username, s.config.AccessTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	response := loginUserResponse{
+		AccessToken:  accessToken,
+		userResponse: newUserResponse(user),
+	}
 	ctx.JSON(http.StatusOK, response)
 }
 
